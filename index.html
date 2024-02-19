@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life of Astro</title>
+    <script src="https://unpkg.com/kaboom@3000.0.0-alpha.2/dist/kaboom.js"></script>
+  </head>
+  <style>
+    body {
+      overflow-x: hidden;
+      /* overflow-y: hidden; */
+    }
+  </style>
+  <body>
+    <script>
+      kaboom({
+        // scale: 2,
+        background: [0, 0, 0],
+      });
+
+      /////// LOAD ASSETS ////////
+      loadFont("mek", "fonts/MEK-Mono.otf");
+      loadFont("ipu", "fonts/IPIXELU.ttf");
+      loadFont("gp", "fonts/Georgiapix.ttf");
+
+      loadSound("step", "sounds/Steps.mp3");
+      loadSound("music", "sounds/Classical.mp3");
+      loadSound("smoking", "sounds/Smoking.mp3");
+      loadSound("wind", "sounds/Wind.mp3");
+      loadSound("mac", "sounds/MacMiller.mp3");
+
+      loadSprite("sheipi", "sprites/Sheipiter.png", {
+        sliceX: 14,
+        sliceY: 2,
+        anims: {
+          idle: {
+            from: 0,
+            to: 13,
+            speed: 4,
+            loop: true,
+          },
+
+          talk: {
+            from: 13,
+            to: 15,
+            speed: 2,
+            loop: true,
+          },
+
+          caminar: {
+            from: 16,
+            to: 27,
+            speed: 8,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("backgr", "sprites/Background.png");
+      loadSprite("backas", "sprites/Backas cielos.png");
+      loadSprite("glow", "sprites/Glow.png");
+      loadSprite("nubes", "sprites/Nubes.png");
+      loadSprite("blur", "sprites/Blurred.png");
+      loadSprite("escalera", "sprites/Escalera.png");
+      loadSprite("shadow", "sprites/Sombra.png");
+      loadSprite("wall", "sprites/Pared.png");
+      loadSprite("piece", "sprites/Pieza.png");
+      loadSprite("f1", "sprites/F1.png");
+      loadSprite("f2", "sprites/F2.png");
+      loadSprite("f3", "sprites/F3.png");
+      loadSprite("f4", "sprites/F4.png");
+      loadSprite("f5", "sprites/F5.png");
+      loadSprite("f6", "sprites/F6.png");
+      loadSprite("bird", "sprites/Bird.png", {
+        sliceX: 3,
+        anims: {
+          fly: {
+            from: 0,
+            to: 2,
+            speed: 5,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("moon", "sprites/Moon.png", {
+        sliceX: 6,
+        sliceY: 9,
+        anims: {
+          idle: {
+            from: 0,
+            to: 53,
+            speed: 1,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("cloudman", "sprites/Jumping Cloud.png", {
+        sliceX: 8,
+        sliceY: 6,
+        anims: {
+          fall: {
+            from: 0,
+            to: 21,
+            speed: 5,
+            loop: false,
+          },
+
+          idle: {
+            from: 33,
+            to: 42,
+            speed: 2,
+            loop: true,
+          },
+
+          tie: {
+            from: 22,
+            to: 33,
+            speed: 4,
+            loop: false,
+          },
+        },
+      });
+      loadSprite("piano", "sprites/Piano.png", {
+        sliceX: 2,
+        sliceY: 7,
+        anims: {
+          idle: {
+            from: 7,
+            to: 13,
+            speed: 2,
+            loop: true,
+          },
+
+          tocar: {
+            from: 0,
+            to: 6,
+            speed: 4,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("pianosky", "sprites/Pianosky.png", {
+        sliceX: 2,
+        sliceY: 4,
+        anims: {
+          idle: {
+            from: 0,
+            to: 7,
+            speed: 4,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("cielo", "sprites/Cielos.png", {
+        sliceX: 2,
+        sliceY: 4,
+        anims: {
+          idle: {
+            from: 0,
+            to: 7,
+            speed: 2,
+            loop: true,
+          },
+        },
+      });
+      loadSprite("suit", "sprites/Suited.png", {
+        sliceX: 38,
+        sliceY: 2,
+        anims: {
+          walk: {
+            from: 1,
+            to: 12,
+            speed: 8,
+            loop: true,
+          },
+          idle: {
+            from: 0,
+            to: 0,
+            speed: 2,
+            loop: true,
+          },
+          smoke: {
+            from: 13,
+            to: 37,
+            speed: 6,
+            loop: false,
+          },
+          "sky idle": {
+            from: 38,
+            to: 41,
+            speed: 8,
+            loop: true,
+          },
+          jump: {
+            from: 42,
+            to: 45,
+            speed: 8,
+            loop: false,
+          },
+        },
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //           GLOBAL SETTINGS            //
+      //                                      //
+      //////////////////////////////////////////
+
+      const SPEED = 120;
+      const JPSPEED = 150;
+      // const JUGADOR = choose(["YSuit", "suit", "GSuit"])
+      const JUGADOR = choose(["suit"]);
+
+      //////////////////////////////////////////
+      //                                      //
+      //              ESCENA 01               //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("game", () => {
+        const sound = play("step", {
+          loop: true,
+          paused: true,
+        });
+
+        const smoking = play("smoking", {
+          loop: false,
+          paused: true,
+          volume: 1,
+        });
+
+        sound.pause();
+        smoking.pause();
+
+        add([
+          rect(width(), 3),
+          area(),
+          color(50, 50, 50),
+          pos(width() / 2, height() / 2 + 15),
+          anchor("bot"),
+          body({ isStatic: true }),
+        ]);
+        add([
+          rect(150, 80),
+          area(),
+          color(20, 20, 20),
+          pos(width() / 2, height() / 2 + 45),
+          anchor("center"),
+          // body({ isStatic: true }),
+          "chair",
+        ]);
+
+        add([sprite("backgr"), pos(center()), anchor("center"), scale(3)]);
+
+        const jp = add([
+          sprite("sheipi"),
+          pos(width() / 2 - 170, height() / 2 + 50),
+          anchor("center"),
+          scale(3),
+          area(),
+          "jp",
+        ]);
+
+        jp.play("idle");
+
+        const player = add([
+          sprite(JUGADOR),
+          pos(width() / 3, height() - 150),
+          anchor("center"),
+          scale(3),
+          area(),
+          body(),
+          { z: 20 },
+        ]);
+
+        ["left", "right", "up", "down"].forEach((key) => {
+          onKeyPress(key, () => {
+            player.play("walk");
+            sound.play();
+          });
+          onKeyRelease(key, () => {
+            if (
+              !isKeyDown("left") &&
+              !isKeyDown("right") &&
+              !isKeyDown("up") &&
+              !isKeyDown("down")
+            ) {
+              player.play("idle");
+              sound.stop();
+            }
+          });
+        });
+
+        onKeyDown("left", () => {
+          player.move(-SPEED, 0);
+          player.flipX(true);
+        });
+
+        onKeyDown("right", () => {
+          player.move(SPEED, 0);
+          player.flipX(false);
+        });
+
+        onKeyDown("up", () => {
+          player.move(0, -SPEED);
+        });
+
+        onKeyDown("down", () => {
+          player.move(0, SPEED);
+        });
+
+        add([
+          text("FOMO", { size: 32, width: 300, font: "ipu" }),
+          pos(50, height() - 78),
+          // fixed()
+        ]);
+        add([
+          text("SHEIPITER", { size: 18, width: 300, font: "mek" }),
+          pos(50, height() - 50),
+          opacity(0.5),
+          // fixed()
+        ]);
+
+        const spawnedFlowers = [];
+
+        function flowerblue() {
+          const blueFlower = add([
+            sprite("f6"),
+            pos(player.pos),
+            anchor("center"),
+            scale(3),
+            area(),
+            "blueflor",
+          ]);
+
+          spawnedFlowers.push(blueFlower);
+        }
+
+        function flowerothers() {
+          const otherFlower = add([
+            sprite(choose(["f1", "f2", "f3", "f4", "f5"])),
+            pos(player.pos),
+            anchor("center"),
+            scale(3),
+            area(),
+            "flor",
+          ]);
+
+          spawnedFlowers.push(otherFlower);
+        }
+
+        function deleteLastFlower() {
+          if (spawnedFlowers.length > 0) {
+            const lastFlower = spawnedFlowers.pop();
+            destroy(lastFlower);
+          }
+        }
+
+        function flowers() {
+          const x = randi(1, 41);
+          if (x < 40) {
+            flowerothers();
+          } else {
+            flowerblue();
+          }
+        }
+
+        onKeyPress("f", () => {
+          flowers();
+        });
+
+        onKeyPress("w", () => {
+          destroyAll("flor");
+          destroyAll("blueflor");
+        });
+
+        onKeyPress("z", () => {
+          deleteLastFlower();
+        });
+
+        player.onCollide("chair", () => {
+          sound.stop();
+          const cartel = add([
+            text("Press A to view the art.", {
+              size: 16,
+              width: 300,
+              font: "mek",
+              align: "center",
+            }),
+            // color(0),
+            pos(width() / 2, height() - 50),
+            anchor("center"),
+          ]);
+          onKeyDown("a", () => {
+            go("art");
+          });
+
+          player.onCollideEnd("chair", () => {
+            destroy(cartel);
+          });
+        });
+
+        player.onCollide("jp", () => {
+          jp.play("talk");
+          const CHARLA = add([
+            text(
+              "Press F to place flowers, W to wipe them out\n and Z to delete the last one.",
+              { size: 16, width: 600, font: "mek", align: "center" }
+            ),
+            pos(width() / 2, height() - 50),
+            anchor("center"),
+          ]);
+          player.onCollideEnd("jp", () => {
+            destroy(CHARLA);
+          });
+        });
+
+        let jpLoop; // Declare a variable to store the loop interval ID
+
+        player.onCollideEnd("jp", () => {
+          wait(0.2, () => {
+            jp.play("caminar");
+
+            // Start the loop and store the interval ID in jpLoop
+            jpLoop = setInterval(() => {
+              jp.move(-JPSPEED, 0);
+            }, 25); // 30 milliseconds is equivalent to 0.03 seconds
+
+            wait(9, () => {
+              clearInterval(jpLoop); // Stop the loop after 9 seconds
+              jp.destroy();
+            });
+          });
+        });
+
+        let currentCollisionObject = null;
+
+        player.onCollide("blueflor", (blueflor) => {
+          // Store the reference to the currently collided blueflor object
+          currentCollisionObject = blueflor;
+
+          // When the collision ends, clear the currentCollisionObject
+          player.onCollideEnd("blueflor", (obj) => {
+            if (obj === currentCollisionObject) {
+              currentCollisionObject = null;
+            }
+          });
+        });
+
+        onKeyPress("s", () => {
+          // Check if there is an ongoing collision
+          if (currentCollisionObject) {
+            // If so, destroy that specific object
+            player.play("smoke");
+            smoking.play();
+            destroy(currentCollisionObject);
+            wait(5, () => {
+              go("cielo");
+            });
+            // Clear the reference so you don't destroy anything else
+            currentCollisionObject = null;
+          }
+        });
+
+        player.onCollide("blueflor", () => {
+          sound.stop();
+          const cartel = add([
+            text("Press S to smoke this flower.", {
+              size: 16,
+              width: 300,
+              font: "mek",
+              align: "center",
+            }),
+            pos(width() / 2, height() - 50),
+            anchor("center"),
+          ]);
+
+          player.onCollideEnd("blueflor", () => {
+            destroy(cartel);
+          });
+        });
+
+        // player.onUpdate(() => {
+        //   camPos(player.pos)
+        // })
+
+        // player.onPhysicsResolve(() => {
+        //   // Set the viewport center to player.pos
+        //   camPos(player.pos)
+        // })
+
+        ///////////// UP TO HERE FOR CAM ////////////
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //             ESCENA 02                //
+      //                                      //
+      //////////////////////////////////////////
+
+      //////////////////////////////////////////
+      //                                      //
+      //          ESCENA ARTE CIELO           //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("art sky", () => {
+        const music = play("music", {
+          loop: true,
+          paused: true,
+          volume: 0.3,
+        });
+        music.play(),
+          add([sprite("backas"), pos(center()), anchor("center"), scale(3)]);
+
+        add([
+          pos(width() / 2 + 30, height() / 2), // Adjust the position as needed
+          anchor("left"),
+          text("FOMO", {
+            size: 30, // Adjust the size of the title
+            font: "ipu", // Use a different font for the title
+            // color: rgb(1, 0, 0), // You can customize the color as well
+          }),
+        ]);
+
+        add([
+          pos(width() / 2 + 30, height() / 2 + 280), // Adjust the position as needed
+          anchor("botleft"),
+          text("250 x 312\n2024", {
+            size: 12, // Adjust the size of the title
+            font: "gp", // Use a different font for the title
+            // lineSpacing: 0.2,
+            // color: rgb(1, 0, 0), // You can customize the color as well
+          }),
+          opacity(0.7),
+        ]);
+
+        add([
+          pos(width() / 2 + 30, height() / 2 + 240),
+          anchor("botleft"),
+          text(
+            "FOMO is the first installment in the Life of Astro collection. The piece aims to reflect on the absurdity of fomoing, leaving behind the flowers (representing beauty and art) in pursuit of the instant satisfaction of a happy meal (financial gains).\n\nAt first glance, you might not fully appreciate every character in the composition, but upon closer inspection, you can realize that each one portrays a different way of fomoing. From the leader who dives headfirst to those who leap with a mix of fear, excitement, or desperation. Which role do you see yourself representing?",
+            {
+              size: 12, // 48 pixels tall
+              width: 380, // it'll wrap to next line when width exceeds this value
+              font: "gp", // specify any font you loaded or browser built-in
+              lineSpacing: 5,
+            }
+          ),
+        ]);
+
+        const btn = add([
+          rect(380, 24, { radius: 3 }),
+          pos(width() / 2 + 220, height() / 2 + 308),
+          area(),
+          scale(1),
+          anchor("center"),
+          opacity(0.3),
+          // outline(4),
+        ]);
+
+        // add a child object that displays the text
+        btn.add([
+          text("Link to auction", {
+            font: "mek",
+            size: 18,
+            align: "center",
+          }),
+          anchor("center"),
+          // color(166,199,223),
+        ]);
+
+        btn.onHoverUpdate(() => {
+          btn.scale = vec2(1.05);
+          setCursor("pointer");
+        });
+
+        btn.onHoverEnd(() => {
+          btn.scale = vec2(1);
+        });
+
+        btn.onClick(() =>
+          window.open("https://foundation.app/@Sheipiter/loa-f3cc/1", "_blank")
+        );
+
+        add([
+          sprite("piece"),
+          pos(width() / 2 - 30, height() / 2),
+          anchor("right"),
+          area(),
+          scale(2),
+        ]);
+
+        // Press any key to go back
+        onKeyPress(() => {
+          music.stop();
+          wait(0.2, () => {
+            go("cielo");
+          });
+        });
+        // onMousePress(() => {
+        //   music.stop();
+        //   wait(0.2, () => {
+        //     go("cielo");
+        //   });
+        // });
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //              ESCENA ARTE             //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("art", () => {
+        add([
+          rect(width(), height()),
+          area(),
+          color(0),
+          pos(center()),
+          anchor("center"),
+          body({ isStatic: true }),
+        ]);
+        add([
+          pos(width() / 2 + 30, height() / 2), // Adjust the position as needed
+          anchor("left"),
+          text("FOMO", {
+            size: 30, // Adjust the size of the title
+            font: "ipu", // Use a different font for the title
+            // color: rgb(1, 0, 0), // You can customize the color as well
+          }),
+        ]);
+
+        add([
+          pos(width() / 2 + 30, height() / 2 + 280), // Adjust the position as needed
+          anchor("botleft"),
+          text("250 x 312\n2024", {
+            size: 12, // Adjust the size of the title
+            font: "gp", // Use a different font for the title
+            // lineSpacing: 0.2,
+            // color: rgb(1, 0, 0), // You can customize the color as well
+          }),
+          opacity(0.7),
+        ]);
+
+        add([
+          pos(width() / 2 + 30, height() / 2 + 240),
+          anchor("botleft"),
+          text(
+            "FOMO is the first installment in the Life of Astro collection. The piece aims to reflect on the absurdity of fomoing, leaving behind the flowers (representing beauty and art) in pursuit of the instant satisfaction of a happy meal (financial gains).\n\nAt first glance, you might not fully appreciate every character in the composition, but upon closer inspection, you can realize that each one portrays a different way of fomoing. From the leader who dives headfirst to those who leap with a mix of fear, excitement, or desperation. Which role do you see yourself representing?",
+            {
+              size: 12, // 48 pixels tall
+              width: 380, // it'll wrap to next line when width exceeds this value
+              font: "gp", // specify any font you loaded or browser built-in
+              lineSpacing: 5,
+            }
+          ),
+        ]);
+
+        const btn = add([
+          rect(380, 24, { radius: 3 }),
+          pos(width() / 2 + 220, height() / 2 + 308),
+          area(),
+          scale(1),
+          anchor("center"),
+          opacity(0.3),
+          // outline(4),
+        ]);
+
+        // add a child object that displays the text
+        btn.add([
+          text("Link to auction", {
+            font: "mek",
+            size: 18,
+            align: "center",
+          }),
+          anchor("center"),
+          // color(166,199,223),
+        ]);
+
+        btn.onHoverUpdate(() => {
+          btn.scale = vec2(1.05);
+          setCursor("pointer");
+        });
+
+        btn.onHoverEnd(() => {
+          btn.scale = vec2(1);
+        });
+
+        btn.onClick(() =>
+          window.open("https://foundation.app/@Sheipiter/loa-f3cc/1", "_blank")
+        );
+
+        add([
+          sprite("piece"),
+          pos(width() / 2 - 30, height() / 2),
+          anchor("right"),
+          area(),
+          scale(2),
+        ]);
+
+        // Press any key to go back
+        onKeyPress(() => {
+          go("game");
+        });
+        // onMousePress(() => {
+        //   go("game");
+        // });
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //              ESCENA CIELO            //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("cielo", () => {
+        const sound = play("step", {
+          loop: true,
+          paused: true,
+        });
+
+        sound.pause();
+
+        const wind = play("wind", {
+          loop: true,
+          paused: true,
+          volume: 0.5,
+        });
+
+        wind.play();
+
+        add([
+          rect(width(), height()),
+          area(),
+          color(166, 199, 223),
+          pos(center()),
+          anchor("center"),
+        ]);
+
+        add([
+          rect(width(), 10),
+          area(),
+          color(166, 199, 223),
+          pos(width() / 2, height() / 2 + 40),
+          anchor("bot"),
+          body({ isStatic: true }),
+        ]);
+
+        add([
+          rect(width(), 20),
+          area(),
+          color(166, 199, 223),
+          pos(width() / 2 + 300, height() / 2),
+          anchor("topleft"),
+          rotate(26.565),
+          body({ isStatic: true }),
+        ]);
+
+        add([
+          rect(width(), 20),
+          area(),
+          color(166, 199, 223),
+          pos(width() / 2 - 300, height() / 2),
+          anchor("topright"),
+          rotate(-26.565),
+          body({ isStatic: true }),
+        ]);
+
+        add([
+          rect(300, 5),
+          area(),
+          color(166, 199, 223),
+          pos(width() / 2, height() + 20),
+          anchor("center"),
+          // body({ isStatic: true }),
+          "escalera",
+        ]);
+
+        add([
+          rect(300, 10),
+          area(),
+          color(166, 199, 223),
+          pos(width() / 2, height() / 2 + 70),
+          anchor("bot"),
+          // body({ isStatic: true }),
+          "chair",
+        ]);
+
+        add([
+          rect(10, 10),
+          area(),
+          color(250, 0, 0),
+          pos(width() / 2 - 482, height() / 2 + 110),
+          anchor("center"),
+          // body({ isStatic: true }),
+          "puerta",
+        ]);
+
+        const CIELO = add([
+          sprite("cielo"),
+          pos(center()),
+          anchor("center"),
+          scale(3),
+        ]);
+        CIELO.play("idle");
+
+        add([
+          sprite("escalera"),
+          area(),
+          pos(width() / 2, height()),
+          anchor("bot"),
+          scale(3),
+        ]);
+
+        const player = add([
+          sprite(JUGADOR),
+          pos(width() / 2, height() - 160),
+          anchor("center"),
+          scale(3),
+          area(),
+          body(),
+          {
+            z: 20,
+          },
+        ]);
+
+        player.play("sky idle");
+        ["left", "right", "up", "down"].forEach((key) => {
+          onKeyPress(key, () => {
+            player.play("walk");
+            sound.play();
+          });
+          onKeyRelease(key, () => {
+            if (
+              !isKeyDown("left") &&
+              !isKeyDown("right") &&
+              !isKeyDown("up") &&
+              !isKeyDown("down")
+            ) {
+              player.play("sky idle");
+              sound.stop();
+            }
+          });
+        });
+
+        onKeyDown("left", () => {
+          player.move(-SPEED, 0);
+          player.flipX(true);
+        });
+
+        onKeyDown("right", () => {
+          player.move(SPEED, 0);
+          player.flipX(false);
+        });
+
+        onKeyDown("up", () => {
+          player.move(0, -SPEED);
+        });
+
+        onKeyDown("down", () => {
+          player.move(0, SPEED);
+        });
+
+        add([
+          text("FOMO", { size: 32, width: 300, font: "ipu" }),
+          pos(50, height() - 78),
+          color(138, 129, 108),
+          // fixed()
+        ]);
+        add([
+          text("SHEIPITER", { size: 18, width: 300, font: "mek" }),
+          pos(50, height() - 50),
+          opacity(0.5),
+          color(138, 129, 108),
+          // fixed()
+        ]);
+
+        const spawnedFlowers = [];
+
+        function flowerblue() {
+          const blueFlower = add([
+            sprite("f6"),
+            pos(player.pos),
+            anchor("center"),
+            scale(3),
+            area(),
+            "blueflor",
+          ]);
+
+          spawnedFlowers.push(blueFlower);
+        }
+
+        function flowerothers() {
+          const otherFlower = add([
+            sprite(choose(["f1", "f2", "f3", "f4", "f5"])),
+            pos(player.pos),
+            anchor("center"),
+            scale(3),
+            area(),
+            "flor",
+          ]);
+
+          spawnedFlowers.push(otherFlower);
+        }
+
+        function deleteLastFlower() {
+          if (spawnedFlowers.length > 0) {
+            const lastFlower = spawnedFlowers.pop();
+            destroy(lastFlower);
+          }
+        }
+
+        function flowers() {
+          const x = randi(1, 5);
+          if (x < 5) {
+            flowerothers();
+          } else {
+            flowerblue();
+          }
+        }
+
+        onKeyPress("f", () => {
+          flowers();
+        });
+
+        onKeyPress("w", () => {
+          destroyAll("flor");
+          destroyAll("blueflor");
+        });
+
+        onKeyPress("z", () => {
+          deleteLastFlower();
+        });
+
+        player.onCollide("puerta", () => {
+          sound.stop();
+          const textopuerta = add([
+            text("Press J to jump into the cloud.", {
+              size: 16,
+              width: 300,
+              font: "mek",
+              align: "center",
+            }),
+            color(138, 129, 108),
+            pos(width() / 2, height() - 42),
+            anchor("center"),
+          ]);
+
+          onKeyDown("j", () => {
+            player.play("jump");
+            wind.stop();
+            wait(0.8, () => {
+              go("piano");
+            });
+          });
+
+          player.onCollideEnd("puerta", () => {
+            destroy(textopuerta);
+          });
+        });
+
+        player.onCollide("escalera", () => {
+          sound.stop();
+          wind.stop();
+          wait(1, () => {
+            go("game");
+          });
+        });
+
+        player.onCollide("chair", () => {
+          sound.stop();
+          const cartel = add([
+            text("Press A to view the art.", {
+              size: 16,
+              width: 300,
+              font: "mek",
+              align: "center",
+            }),
+            color(138, 129, 108),
+            pos(width() / 2, height() - 42),
+            anchor("center"),
+          ]);
+          onKeyDown("a", () => {
+            wind.stop();
+            go("art sky");
+          });
+
+          player.onCollideEnd("chair", () => {
+            destroy(cartel);
+          });
+        });
+
+        // player.onUpdate(() => {
+        //   camPos(player.pos)
+        // })
+
+        // player.onPhysicsResolve(() => {
+        //   // Set the viewport center to player.pos
+        //   camPos(player.pos)
+        // })
+
+        ///////////// UP TO HERE FOR CAM ////////////
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //            ESCENA INTRO              //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("intro", () => {
+        add([
+          pos(width() / 2 - 225, height() / 2 - 110), // Adjust the position as needed
+          anchor("left"),
+          text("LIFE OF ASTRO", {
+            size: 30, // Adjust the size of the title
+            font: "ipu", // Use a different font for the title
+            // color: rgb(1, 0, 0), // You can customize the color as well
+          }),
+        ]);
+
+        add([
+          pos(center()),
+          anchor("center"),
+          text(
+            "Welcome to the inaugural art exhibition of the Life of Astro collection. I urge you to explore and take your time to appreciate both the piece as well as the environment. Sound plays a big role in the exhibition, so it's recommended.\n\nFeel free to own, customize and share the space. \n\nHope you enjoy the experience.",
+            {
+              size: 20,
+              width: 450,
+              font: "mek",
+              letterSpacing: 0,
+              lineSpacing: 0,
+              // align: "center"
+            }
+          ),
+          opacity(0.8),
+        ]);
+        // add([
+        //     pos(width()/2 - 225, height()/2 + 70),
+        //     anchor("left"),
+        //     text("Sheipiter",
+        //          {
+        //         size: 14,
+        //         width: 450,
+        //         font: "ipu",
+        //         align: "left"
+        //     }),
+        //   opacity(0.5),
+        // ])
+
+        const keys = add([
+          pos(width() / 2, height() - 100),
+          anchor("center"),
+          text("Press any key to continue", {
+            size: 18,
+            width: 600,
+            font: "mek",
+            align: "center",
+          }),
+          opacity(0.5),
+        ]);
+
+        // loop(2, () => {
+        //   tween(1, 1.03, 1, (val) => (keys.scale = val));
+        //   wait(1, () => {
+        //     tween(1.03, 1, 1, (val) => (keys.scale = val));
+        //   });
+        // });
+
+        // Press any key to go back
+        onKeyPress(start);
+        onMousePress(start);
+      });
+
+      //////////////////////////////////////////
+      //                                      //
+      //            ESCENA PIANO              //
+      //                                      //
+      //////////////////////////////////////////
+
+      scene("piano", () => {
+        const miller = play("mac", {
+          loop: false,
+          paused: true,
+          volume: 0.5,
+        });
+        miller.pause(),
+          wait(5, () => {
+            miller.play();
+          });
+
+        add([
+          rect(width(), height()),
+          area(),
+          color(166, 199, 223),
+          pos(center()),
+          anchor("center"),
+          { z: -3 },
+        ]);
+
+        loop(10, () => {
+          const direction = choose([
+            vec2(1, -1), // diagonal up-right
+            vec2(-1, -1), // diagonal up-left
+            vec2(2, -1),
+            vec2(-2, -1),
+          ]);
+
+          const bird = add([
+            pos(width() / 2 - 200, height() / 2 + 100),
+            sprite("bird"),
+            anchor("center"),
+            scale(rand(2, 3)),
+            area({ collisionIgnore: ["particle"] }),
+            body(),
+            lifespan(3, { fade: 0.5 }),
+            opacity(1),
+            { z: -1 },
+            move(direction, rand(60, 240)),
+          ]);
+
+          bird.play("fly");
+        });
+
+        const luna = add([
+          sprite("moon"),
+          pos(width() / 2, height() / 2 - 200),
+          anchor("center"),
+          scale(3),
+          { z: -2 },
+        ]);
+        luna.play("idle");
+
+        const pianosky = add([
+          sprite("pianosky"),
+          pos(center()),
+          anchor("center"),
+          scale(3),
+        ]);
+        pianosky.play("idle");
+
+        const Piano = add([
+          sprite("piano"),
+          pos(width() / 2 - 205, height() / 2 + 144),
+          anchor("center"),
+          scale(3),
+        ]);
+        Piano.play("idle");
+
+        wait(7, () => {
+          Piano.play("tocar");
+        });
+
+        const texto = add([
+          text(
+            "You've reached the end of this exhibition.\nHope you enjoyed and thanks for sharing \nyour time with me.\n\nSee you next time,\nSheipi.",
+            { size: 24, width: 600, font: "mek", align: "center" }
+          ),
+          // color(0),
+          pos(width() / 2 + 10, height() / 2 - 120),
+          anchor("center"),
+        ]);
+
+        ////// BOTON INTRO //////
+
+        const btn = add([
+          rect(80, 24, { radius: 3 }),
+          pos(width() / 2 + 100, height() / 2 + 30),
+          area(),
+          scale(1),
+          anchor("center"),
+          opacity(0.3),
+          // outline(4),
+        ]);
+
+        // add a child object that displays the text
+        btn.add([
+          text("Restart", {
+            font: "mek",
+            size: 18,
+            align: "center",
+          }),
+          anchor("center"),
+          // color(166,199,223),
+        ]);
+
+        btn.onHoverUpdate(() => {
+          btn.scale = vec2(1.1);
+          setCursor("pointer");
+        });
+
+        btn.onHoverEnd(() => {
+          btn.scale = vec2(1);
+        });
+
+        btn.onClick(() => miller.stop());
+
+        btn.onClick(() =>
+          wait(0.1, () => {
+            go("intro");
+          })
+        );
+
+        ////// BOTON AUCTION //////
+
+        const btn2 = add([
+          rect(80, 24, { radius: 3 }),
+          pos(width() / 2 - 100, height() / 2 + 30),
+          area(),
+          scale(1),
+          anchor("center"),
+          opacity(0.3),
+          // outline(4),
+        ]);
+
+        // add a child object that displays the text
+        btn2.add([
+          text("Auction", {
+            font: "mek",
+            size: 18,
+            align: "center",
+          }),
+          anchor("center"),
+          // color(166,199,223),
+        ]);
+
+        btn2.onHoverUpdate(() => {
+          btn2.scale = vec2(1.1);
+          setCursor("pointer");
+        });
+
+        btn2.onHoverEnd(() => {
+          btn2.scale = vec2(1);
+        });
+
+        // btn2.onClick(() => miller.stop());
+
+        btn2.onClick(() =>
+          window.open("https://foundation.app/@Sheipiter/loa-f3cc/1", "_blank")
+        );
+
+        ////// BOTON POAP  //////
+
+        const btn3 = add([
+          rect(80, 24, { radius: 3 }),
+          pos(width() / 2, height() / 2 + 30),
+          area(),
+          scale(1),
+          anchor("center"),
+          opacity(0.3),
+          // outline(4),
+        ]);
+
+        // add a child object that displays the text
+        btn3.add([
+          text("POAP", {
+            font: "mek",
+            size: 18,
+            align: "center",
+          }),
+          anchor("center"),
+          // color(166,199,223),
+        ]);
+
+        btn3.onHoverUpdate(() => {
+          btn3.scale = vec2(1.1);
+          setCursor("pointer");
+        });
+
+        btn3.onHoverEnd(() => {
+          btn3.scale = vec2(1);
+        });
+
+        // btn2.onClick(() => miller.stop());
+
+        btn3.onClick(() =>
+          window.open("https://foundation.app/@Sheipiter/loa-f3cc/1", "_blank")
+        );
+
+        //// COSAS INTERESANTES /////
+
+        // tween(0.8, 1, 3, (val) => btn.scale = val);
+        // addButton("Restart", vec2(width()/2 + 60, height()/2), () => restart)
+        // addButton("Auction", vec2(width()/2 - 60, height()/2), () => go("game"))
+
+        const cloudman = add([
+          sprite("cloudman"),
+          pos(width() / 2 + 205, height() / 2 + 144),
+          anchor("center"),
+          scale(3),
+        ]);
+        cloudman.play("fall");
+
+        wait(6, () => {
+          cloudman.play("idle");
+        });
+
+        wait(16, () => {
+          cloudman.play("tie");
+          wait(5, () => {
+            cloudman.play("idle");
+          });
+        });
+
+        wait(70, () => {
+          Piano.play("idle");
+        });
+
+        wait(240, () => {
+          go("intro");
+        });
+      });
+
+      function start() {
+        go("game");
+      }
+      go("intro");
+      // go("piano");
+      // go("cielo")
+      // go("art")
+      // go("art sky")
+    </script>
+  </body>
+</html>
